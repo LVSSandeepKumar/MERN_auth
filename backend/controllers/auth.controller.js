@@ -67,8 +67,8 @@ export const verifyEmail = async(req,res) => {
         }
         //Update the user
         user.isVerified = true;
-        user.verificationToken = null;
-        user.verificationTokenExpiresAt = null;
+        user.verificationToken = undefined;
+        user.verificationTokenExpiresAt = undefined;
         await user.save();
 
         sendWelcomeEmail(user.email, user.name);
@@ -99,7 +99,9 @@ export const login = async(req,res) => {
 //Logout function
 export const logout = async(req,res) => {
     try {
-        
+        //Clear the cookie and send response message
+        res.clearCookie("jwt");
+        return res.status(200).json({ message: "Logout Successful" });
     } catch (error) {
         //Error handling
         console.log(`Error in logout Controller, ${error.message}`);
