@@ -6,8 +6,10 @@ import { connectDB } from "./utils/connectDB.js";
 import authRoutes from "./routes/auth.route.js";
 //Setup the express app
 const app = express();
-
 const PORT = ENV_VARS.PORT;
+
+//Middleware functions
+app.use(express.json()); //middleware to parse incoming requests with json payloads
 
 app.use("/api/auth", authRoutes);
 
