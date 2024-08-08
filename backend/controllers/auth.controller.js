@@ -2,12 +2,14 @@ import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
 import { generateVerificationCode } from "../utils/generateVerificationCode.js";
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
+import { sendVerificationEmail } from "../mailtrap/emails.js";
 
 //Signup function
 export const signup = async(req,res) => {
-    //Read the signup credentials from request body
-    const {email, password, name} = req.body;
     try {
+        //Read the signup credentials from request body
+        const {email, password, name} = req.body;
+        console.log(req.body);
         //Check if all credentials are entered
         if(!email || !password || !name) {
             return res.status(400).json({ message: "Please provide all the credentials" });
@@ -33,7 +35,9 @@ export const signup = async(req,res) => {
         //Save the user to db
         await user.save();
         //Generate a token and set it to cookie
-        generateTokenAndSetCookie(res, user._id);
+        generateTokenAndSetCookie(user._id, res);
+        //Send verification email
+        await sendVerificationEmail(user.email, verificationToken);
         //Return the user to client
         return res.status(201).json({
             message: "User created successfully",
