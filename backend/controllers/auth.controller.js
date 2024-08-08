@@ -88,7 +88,33 @@ export const verifyEmail = async(req,res) => {
 //Login function
 export const login = async(req,res) => {
     try {
-        
+        //Read the login credentials from request body
+        const {email, password} = req.body;
+        if(!email || !password) {
+            return res.status(400).json({ message: "Please fill all the fields" });
+        }
+        //Check if user exist with the given email
+        const user = await User.findOne({email});
+        if(!user) {
+            return res.status(404).json({ message: "Invalid login credentials" });
+        }
+        //Check if the password is valid using bcrypt compare
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if(!isPasswordValid) {
+            return res.status(400).json({ message: "Incorrect Password" });
+        }
+        //If all validation checks are passed, set the cookie
+        generateTokenAndSetCookie(user._id, res);
+        //Update the last login date of user
+        user.lastLogin = new Date();
+        await user.save();
+        return res.status(200).json({ 
+            message: "Login successful",
+            user: {
+                ...user._doc,
+                password: ""
+            }
+         });
     } catch (error) {
         //Error handling
         console.log(`Error in login Controller, ${error.message}`);
