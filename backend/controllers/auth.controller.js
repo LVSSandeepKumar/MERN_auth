@@ -193,3 +193,20 @@ export const resetPassword = async(req,res) => {
         return res.status(500).json({message: "Internal Server Error"});
     }
 }
+
+//Check authorized user
+export const checkAuth = async(req,res) => {
+    try {
+        //Fetch user Id from request and find the user 
+        const user = req.user;
+        if(!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        //Return the user without password to client
+        return res.status(200).json({user});
+    } catch (error) {
+        //Error handling
+        console.log(`Error in checkAuth Controller, ${error.message}`);
+        return res.status(500).json({message: "Internal Server Error"});
+    }
+}
