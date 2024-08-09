@@ -1,8 +1,11 @@
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
+
 import User from "../models/user.model.js";
 import { generateVerificationCode } from "../utils/generateVerificationCode.js";
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
-import { sendVerificationEmail, sendWelcomeEmail } from "../mailtrap/emails.js";
+import { sendVerificationEmail, sendWelcomeEmail, sendForgotPasswordEmail } from "../mailtrap/emails.js";
+import { ENV_VARS } from "../utils/envVars.js";
 
 //Signup function
 export const signup = async(req,res) => {
@@ -131,6 +134,32 @@ export const logout = async(req,res) => {
     } catch (error) {
         //Error handling
         console.log(`Error in logout Controller, ${error.message}`);
+        return res.status(500).json({message: "Internal Server Error"});
+    }
+}
+
+//Forgot Password function
+export const forgotPassword = async(req,res) => {
+    try {
+        //Read user email from request body and find the user with that email
+        const {email} = req.body;
+        const user = await User.findOne({email});
+        if(!user) {
+            return res.status(404).json({ message: "No user exists with the provided email "});
+        }
+        //Generate reset token
+        const resetToken = crypto.randomBytes(20).toString("hex");
+        const resetTokenExpiresAt = Date.now() + 1 * 60 * 60 * 1000; //1 hour in ms
+        //Update the user values and save the user
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordTokenExpiresAt = resetTokenExpiresAt;
+        await user.save();
+        //Send Forgot Password Email
+        await sendForgotPasswordEmail(email, `${ENV_VARS.CLIENT_URL}/reset-password/${resetToken}`);
+        return res.status(200).json({ message: "Reset Password Email sent successfully" });
+    } catch (error) {
+        //Error handling
+        console.log(`Error in forgotPassword Controller, ${error.message}`);
         return res.status(500).json({message: "Internal Server Error"});
     }
 }
