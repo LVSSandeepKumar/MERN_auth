@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useAuthStore } from "../store/authStore";
+import toast from "react-hot-toast";
+import { Loader } from "lucide-react";
 
 const EmailVerificationPage = () => {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const inputRefs = useRef([]);
   const navigate = useNavigate();
+
+  const {error, isLoading, verifyEmail} = useAuthStore();
 
   const handleChange = (index,value) => {
     const newCode = [...code];
@@ -36,10 +41,16 @@ const EmailVerificationPage = () => {
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const verificationCode = code.join("");
-    console.log(verificationCode);
+    try {
+      await verifyEmail(verificationCode);
+      navigate("/");
+      toast.success("Email verified successfully");
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   //Auto submit when all fields are filled
@@ -90,6 +101,7 @@ const EmailVerificationPage = () => {
             ))}
           </div>
 
+          {error && <p className="text-red-500 mt-2 font-semibold">{error.message}</p>}
           <motion.button
             className="mt-5 w-full py-3 px-4 bg-gradient-to-r from-green-500 to-emerald-600
             text-white font-bold rounded-lg shadow-lg hover:from-green-600 hover:to-emerald-700
@@ -98,8 +110,9 @@ const EmailVerificationPage = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="submit"
+            disabled={isLoading}
           >
-            Login
+            {isLoading ? <Loader className="mx-auto animate-spin" size={24}/> : "Verify Email"}
           </motion.button>
         </form>
       </motion.div>
